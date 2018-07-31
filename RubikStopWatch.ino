@@ -11,6 +11,8 @@ SevSeg sevseg; //Instantiate a seven segment controller object
 #define WAIT_MS 1000
 unsigned long start_time_ms = 0;
 long num = 0;
+int startBtn1Pin = A0;
+int startBtn1state = HIGH;
 
 void setup()
 {
@@ -26,6 +28,7 @@ void setup()
                             //I am choosing a "brightness" of 10 because it increases the max update rate to approx. 1/(200us*8) = 625Hz.
                             //This is preferable, as it decreases aliasing when recording the display with a video camera....I think.
   sevseg.setNumber(num, 0);
+  pinMode(startBtn1Pin, INPUT);
   start_time_ms = millis();
 }
 
@@ -34,13 +37,22 @@ void loop()
   //local vars
   static byte decPlace = 0;
   
-  if (millis() - start_time_ms >= 1000)
+  if (millis() - start_time_ms >= 10)
   {
       num < 9999 ? num++ : num = 0;
       sevseg.setNumber(num, decPlace);
       start_time_ms = millis();
       //decPlace++;
       //decPlace %= 2; //rollover back to 0 once variable gets to 2
+  }
+
+  /* check if we need to reset counting */
+  startBtn1state = digitalRead(startBtn1Pin);
+  if (startBtn1state == LOW)
+  {
+	  num = 0;
+	  sevseg.setNumber(num, 0);
+	  start_time_ms = millis();
   }
 
 
