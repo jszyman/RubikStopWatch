@@ -4,13 +4,15 @@
 
 #include "Arduino.h"
 
-
 #include <SevSeg.h>
 
+#define BUTTON_DEBOUNCE_TIME_MS 50
+
 SevSeg sevseg; //Instantiate a seven segment controller object
-#define WAIT_MS 1000
+
 unsigned long start_time_ms = 0;
 unsigned long show_result_time_ms = 0;
+unsigned long button_debounce_time_ms = 0;
 long num = 0;
 int startBtn1Pin = A0;
 int startBtn1state = HIGH;
@@ -57,10 +59,18 @@ void loop()
 			/* TODO: add delay in for initial setting value 0 on display
 			 * to force user to keep button pressed for more than 1 loop() execution
 			 */
-			num = 0;
-			sevseg.setNumber(num, decPlace);
-			//start_time_ms = millis();
-			StopWatchState = STATE_WAIT_FOR_BTN_UP;
+			/* debounce LOW state of button */
+			if (0 == button_debounce_time_ms)
+			{
+				button_debounce_time_ms = millis();
+			}
+
+			if (millis() - button_debounce_time_ms >= BUTTON_DEBOUNCE_TIME_MS)
+			{
+				num = 0;
+				sevseg.setNumber(num, decPlace);
+				StopWatchState = STATE_WAIT_FOR_BTN_UP;
+			}
 		}
 		break;
 	}
@@ -101,6 +111,7 @@ void loop()
 			/* reset state machine */
 			StopWatchState = STATE_WAIT_FOR_BTN_DOWN;
 			sevseg.setChars(allDashesStr);
+			button_debounce_time_ms = 0;
 		}
 		break;
 	}
