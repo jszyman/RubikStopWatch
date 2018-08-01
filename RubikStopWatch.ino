@@ -10,9 +10,22 @@
 SevSeg sevseg; //Instantiate a seven segment controller object
 #define WAIT_MS 1000
 unsigned long start_time_ms = 0;
+unsigned long show_result_time_ms = 0;
 long num = 0;
 int startBtn1Pin = A0;
 int startBtn1state = HIGH;
+byte decPlace = 0; //tells where to put decimal point in dispalyed number
+char allDashesStr[] = "----";
+
+typedef enum
+{
+	STATE_WAIT_FOR_BTN_DOWN = 0,
+	STATE_WAIT_FOR_BTN_UP,
+	STATE_COUNTING,
+	STATE_SHOW_RESULT
+} StopWatchState_t;
+
+StopWatchState_t StopWatchState = STATE_WAIT_FOR_BTN_DOWN;
 
 void setup()
 {
@@ -27,35 +40,72 @@ void setup()
                             //Therefore, for a 4-digit 7-segment + pd, COMMON_ANODE display, the max update rate for a "brightness" of 100 is 1/(2000us*8) = 62.5Hz.
                             //I am choosing a "brightness" of 10 because it increases the max update rate to approx. 1/(200us*8) = 625Hz.
                             //This is preferable, as it decreases aliasing when recording the display with a video camera....I think.
-  sevseg.setNumber(num, 0);
+  sevseg.setChars(allDashesStr);
   pinMode(startBtn1Pin, INPUT);
-  start_time_ms = millis();
 }
 
 void loop()
 {
-  //local vars
-  static byte decPlace = 0;
-  
-  if (millis() - start_time_ms >= 10)
-  {
-      num < 9999 ? num++ : num = 0;
-      sevseg.setNumber(num, decPlace);
-      start_time_ms = millis();
-      //decPlace++;
-      //decPlace %= 2; //rollover back to 0 once variable gets to 2
-  }
+	switch (StopWatchState)
+	{
+	case STATE_WAIT_FOR_BTN_DOWN:
+	{
+		/* check if we need to reset counting */
+		startBtn1state = digitalRead(startBtn1Pin);
+		if (startBtn1state == LOW)
+		{
+			/* TODO: add delay in for initial setting value 0 on display
+			 * to force user to keep button pressed for more than 1 loop() execution
+			 */
+			num = 0;
+			sevseg.setNumber(num, decPlace);
+			//start_time_ms = millis();
+			StopWatchState = STATE_WAIT_FOR_BTN_UP;
+		}
+		break;
+	}
+	case STATE_WAIT_FOR_BTN_UP:
+	{
+		startBtn1state = digitalRead(startBtn1Pin);
+		if (startBtn1state == HIGH)
+		{
+			start_time_ms = millis();
+			StopWatchState = STATE_COUNTING;
+		}
+		break;
+	}
+	case STATE_COUNTING:
+	{
+		if (millis() - start_time_ms >= 10)
+		{
+			num < 9999 ? num++ : num = 0;
+			sevseg.setNumber(num, decPlace);
+			start_time_ms = millis();
+		}
 
-  /* check if we need to reset counting */
-  startBtn1state = digitalRead(startBtn1Pin);
-  if (startBtn1state == LOW)
-  {
-	  num = 0;
-	  sevseg.setNumber(num, 0);
-	  start_time_ms = millis();
-  }
+		startBtn1state = digitalRead(startBtn1Pin);
+		if (startBtn1state == LOW)
+		{
+			/* stop counting */
+			StopWatchState = STATE_SHOW_RESULT;
+			show_result_time_ms = millis();
+		}
+		break;
+	}
+	case STATE_SHOW_RESULT:
+	{
+		/* last counter value of num shall be already displayed
+		 * keep it for 5 secs allowing user to release button */
+		if (millis() - show_result_time_ms >= 5000)
+		{
+			/* reset state machine */
+			StopWatchState = STATE_WAIT_FOR_BTN_DOWN;
+			sevseg.setChars(allDashesStr);
+		}
+		break;
+	}
+	}
 
 
-
-  sevseg.refreshDisplay(); // Must run repeatedly; don't use blocking code (ex: delay()) in the loop() function or this won't work right
+    sevseg.refreshDisplay(); // Must run repeatedly; don't use blocking code (ex: delay()) in the loop() function or this won't work right
 }
