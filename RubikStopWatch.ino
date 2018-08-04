@@ -16,6 +16,9 @@ unsigned long button_debounce_time_ms = 0;
 long num = 0;
 int startBtn1Pin = A0;
 int startBtn1state = HIGH;
+int startBtn2Pin = A1;
+int startBtn2state = HIGH;
+
 byte decPlace = 0; //tells where to put decimal point in dispalyed number
 char allDashesStr[] = "----";
 
@@ -44,6 +47,7 @@ void setup()
                             //This is preferable, as it decreases aliasing when recording the display with a video camera....I think.
   sevseg.setChars(allDashesStr);
   pinMode(startBtn1Pin, INPUT);
+  pinMode(startBtn2Pin, INPUT);
 }
 
 void loop()
@@ -54,7 +58,8 @@ void loop()
 	{
 		/* check if we need to reset counting */
 		startBtn1state = digitalRead(startBtn1Pin);
-		if (startBtn1state == LOW)
+		startBtn2state = digitalRead(startBtn2Pin);
+		if (startBtn1state == LOW && startBtn2state == LOW)
 		{
 			/* TODO: add delay in for initial setting value 0 on display
 			 * to force user to keep button pressed for more than 1 loop() execution
@@ -77,7 +82,8 @@ void loop()
 	case STATE_WAIT_FOR_BTN_UP:
 	{
 		startBtn1state = digitalRead(startBtn1Pin);
-		if (startBtn1state == HIGH)
+		startBtn2state = digitalRead(startBtn2Pin);
+		if (startBtn1state == HIGH && startBtn2state == HIGH)
 		{
 			start_time_ms = millis();
 			StopWatchState = STATE_COUNTING;
@@ -94,11 +100,12 @@ void loop()
 		}
 
 		startBtn1state = digitalRead(startBtn1Pin);
-		if (startBtn1state == LOW)
+		startBtn2state = digitalRead(startBtn2Pin);
+		if (startBtn1state == LOW && startBtn2state == LOW)
 		{
 			/* stop counting */
-			StopWatchState = STATE_SHOW_RESULT;
 			show_result_time_ms = millis();
+			StopWatchState = STATE_SHOW_RESULT;
 		}
 		break;
 	}
