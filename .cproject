@@ -22,6 +22,8 @@
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RubikStopWatch/core/core}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/${ProjName}/lib/SevSeg}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RubikStopWatch/core/variant}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RubikStopWatch/libraries/EEPROM}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RubikStopWatch/libraries/EEPROM/src}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.cpp.sketch.input.1824607027" name="CPP source files" superClass="io.sloeber.compiler.cpp.sketch.input"/>
 							</tool>
@@ -29,6 +31,8 @@
 								<option id="io.sloeber.compiler.c.sketch.option.incpath.722312242" name="Include Paths (-I)" superClass="io.sloeber.compiler.c.sketch.option.incpath" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RubikStopWatch/core/core}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RubikStopWatch/core/variant}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RubikStopWatch/libraries/EEPROM}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RubikStopWatch/libraries/EEPROM/src}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.c.sketch.input.1090701365" name="C Source Files" superClass="io.sloeber.compiler.c.sketch.input"/>
 							</tool>
@@ -36,6 +40,8 @@
 								<option id="io.sloeber.compiler.asm.sketch.option.incpath.994438266" name="Include Paths (-I)" superClass="io.sloeber.compiler.asm.sketch.option.incpath" useByScannerDiscovery="false" valueType="includePath">
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RubikStopWatch/core/core}&quot;"/>
 									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RubikStopWatch/core/variant}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RubikStopWatch/libraries/EEPROM}&quot;"/>
+									<listOptionValue builtIn="false" value="&quot;${workspace_loc:/RubikStopWatch/libraries/EEPROM/src}&quot;"/>
 								</option>
 								<inputType id="io.sloeber.compiler.S.sketch.input.1214984357" name="Assembly source files" superClass="io.sloeber.compiler.S.sketch.input"/>
 							</tool>

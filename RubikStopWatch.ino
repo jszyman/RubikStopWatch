@@ -3,21 +3,25 @@
  */
 
 #include "Arduino.h"
-
+#include <EEPROM.h>
 #include <SevSeg.h>
 
 #define BUTTON_DEBOUNCE_TIME_MS 50
+#define RECORD_MAX 9999UL
+#define E2_START_ADDR 10U
 
 SevSeg sevseg; //Instantiate a seven segment controller object
 
 unsigned long start_time_ms = 0;
 unsigned long show_result_time_ms = 0;
 unsigned long button_debounce_time_ms = 0;
-long num = 0;
+unsigned long num = 0;
 int startBtn1Pin = A0;
 int startBtn1state = HIGH;
 int startBtn2Pin = A1;
 int startBtn2state = HIGH;
+
+unsigned long e2_rec;
 
 byte decPlace = 0; //tells where to put decimal point in dispalyed number
 char allDashesStr[] = "----";
@@ -34,20 +38,31 @@ StopWatchState_t StopWatchState = STATE_WAIT_FOR_BTN_DOWN;
 
 void setup()
 {
-  byte numDigits = 4;
-  byte digitPins[] = {2, 3, 4, 5}; //Digits: 1,2,3,4 <--put one resistor (ex: 220 Ohms, or 330 Ohms, etc, on each digit pin)
-  byte segmentPins[] = {13, 12, 11, 10, 9, 8, 7, 6}; //Segments: A,B,C,D,E,F,G,Period
-  byte resistorsOnSegm = 1;
+	byte numDigits = 4;
+	byte digitPins[] = {2, 3, 4, 5}; //Digits: 1,2,3,4 <--put one resistor (ex: 220 Ohms, or 330 Ohms, etc, on each digit pin)
+	byte segmentPins[] = {13, 12, 11, 10, 9, 8, 7, 6}; //Segments: A,B,C,D,E,F,G,Period
+	byte resistorsOnSegm = 1;
 
-  sevseg.begin(COMMON_CATHODE, numDigits, digitPins, segmentPins, resistorsOnSegm);
-  sevseg.setBrightness(10); //Note: 100 brightness simply corresponds to a delay of 2000us after lighting each segment. A brightness of 0
-                            //is a delay of 1us; it doesn't really affect brightness as much as it affects update rate (frequency).
-                            //Therefore, for a 4-digit 7-segment + pd, COMMON_ANODE display, the max update rate for a "brightness" of 100 is 1/(2000us*8) = 62.5Hz.
-                            //I am choosing a "brightness" of 10 because it increases the max update rate to approx. 1/(200us*8) = 625Hz.
-                            //This is preferable, as it decreases aliasing when recording the display with a video camera....I think.
-  sevseg.setChars(allDashesStr);
-  pinMode(startBtn1Pin, INPUT);
-  pinMode(startBtn2Pin, INPUT);
+	sevseg.begin(COMMON_CATHODE, numDigits, digitPins, segmentPins, resistorsOnSegm);
+	sevseg.setBrightness(10); //Note: 100 brightness simply corresponds to a delay of 2000us after lighting each segment. A brightness of 0
+							//is a delay of 1us; it doesn't really affect brightness as much as it affects update rate (frequency).
+							//Therefore, for a 4-digit 7-segment + pd, COMMON_ANODE display, the max update rate for a "brightness" of 100 is 1/(2000us*8) = 62.5Hz.
+							//I am choosing a "brightness" of 10 because it increases the max update rate to approx. 1/(200us*8) = 625Hz.
+							//This is preferable, as it decreases aliasing when recording the display with a video camera....I think.
+	pinMode(startBtn1Pin, INPUT);
+	pinMode(startBtn2Pin, INPUT);
+	EEPROM.get(E2_START_ADDR, e2_rec);
+
+	if (RECORD_MAX >= e2_rec)
+	{
+		sevseg.setNumber(e2_rec);
+	}
+	else
+	{
+		/* overflow shall be displayed when empty e2 as it contains all 0xFF */
+		sevseg.setChars(allDashesStr);
+	}
+
 }
 
 void loop()
@@ -94,7 +109,7 @@ void loop()
 	{
 		if (millis() - start_time_ms >= 10)
 		{
-			num < 9999 ? num++ : num = 0;
+			num < RECORD_MAX ? num++ : num = 0;
 			sevseg.setNumber(num, decPlace);
 			start_time_ms = millis();
 		}
@@ -115,6 +130,12 @@ void loop()
 		 * keep it for 5 secs allowing user to release button */
 		if (millis() - show_result_time_ms >= 5000)
 		{
+			if(num < e2_rec)
+			{
+				/* new record */
+				EEPROM.put(E2_START_ADDR, num);
+			}
+
 			/* reset state machine */
 			StopWatchState = STATE_WAIT_FOR_BTN_DOWN;
 			sevseg.setChars(allDashesStr);
