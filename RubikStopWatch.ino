@@ -17,6 +17,7 @@ unsigned long start_time_ms = 0;
 unsigned long show_result_time_ms = 0;
 unsigned long button_debounce_time_ms = 0;
 unsigned long clr_wait_time_ms = 0;
+int blink_num = 0;
 unsigned long num = 0;
 int startBtn1Pin = A0;
 int startBtn1state = HIGH;
@@ -166,6 +167,8 @@ void loop()
 		{
 			/* new record */
 			EEPROM.put(E2_START_ADDR, num);
+			/* TODO: uncomment this when sure this is needed */
+			//e2_rec = num;
 		}
 
 		/* last counter value of num shall be already displayed
