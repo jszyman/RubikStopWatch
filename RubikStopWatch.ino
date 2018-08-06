@@ -20,6 +20,9 @@ int startBtn1Pin = A0;
 int startBtn1state = HIGH;
 int startBtn2Pin = A1;
 int startBtn2state = HIGH;
+int clrBtnPin = A2;
+int clrBtnState = HIGH;
+
 
 unsigned long e2_rec;
 
@@ -74,6 +77,7 @@ void loop()
 		/* check if we need to reset counting */
 		startBtn1state = digitalRead(startBtn1Pin);
 		startBtn2state = digitalRead(startBtn2Pin);
+		clrBtnState = digitalRead(clrBtnPin);
 		if (startBtn1state == LOW && startBtn2state == LOW)
 		{
 			/* TODO: add delay in for initial setting value 0 on display
@@ -91,6 +95,16 @@ void loop()
 				sevseg.setNumber(num, decPlace);
 				StopWatchState = STATE_WAIT_FOR_BTN_UP;
 			}
+		}
+		else if (clrBtnState == LOW)
+		{
+			/* clear eeprom */
+			EEPROM.put(E2_START_ADDR, 0xFFFFFFFFUL);
+			sevseg.setChars(allDashesStr);
+		}
+		else
+		{
+			/* do nothing */
 		}
 		break;
 	}
