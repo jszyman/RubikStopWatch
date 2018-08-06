@@ -7,6 +7,7 @@
 #include <SevSeg.h>
 
 #define BUTTON_DEBOUNCE_TIME_MS 50
+#define CLR_WAIT_TIME_MS 3000u
 #define RECORD_MAX 9999UL
 #define E2_START_ADDR 10U
 
@@ -15,6 +16,7 @@ SevSeg sevseg; //Instantiate a seven segment controller object
 unsigned long start_time_ms = 0;
 unsigned long show_result_time_ms = 0;
 unsigned long button_debounce_time_ms = 0;
+unsigned long clr_wait_time_ms = 0;
 unsigned long num = 0;
 int startBtn1Pin = A0;
 int startBtn1state = HIGH;
@@ -32,6 +34,7 @@ char allDashesStr[] = "----";
 typedef enum
 {
 	STATE_WAIT_FOR_BTN_DOWN = 0,
+	STATE_CLR_RECORD,
 	STATE_WAIT_FOR_BTN_UP,
 	STATE_COUNTING,
 	STATE_SHOW_RESULT
@@ -98,9 +101,8 @@ void loop()
 		}
 		else if (clrBtnState == LOW)
 		{
-			/* clear eeprom */
-			EEPROM.put(E2_START_ADDR, 0xFFFFFFFFUL);
-			sevseg.setChars(allDashesStr);
+			clr_wait_time_ms = millis();
+			StopWatchState = STATE_CLR_RECORD;
 		}
 		else
 		{
@@ -108,6 +110,26 @@ void loop()
 		}
 		break;
 	}
+	case STATE_CLR_RECORD:
+	{
+		clrBtnState = digitalRead(clrBtnPin);
+		if (clrBtnState == LOW)
+		{
+			if (millis() - clr_wait_time_ms >= CLR_WAIT_TIME_MS)
+			{
+				/* clear eeprom */
+				e2_rec = 0xFFFFFFFFUL;
+				EEPROM.put(E2_START_ADDR, e2_rec);
+				sevseg.setChars(allDashesStr);
+			}
+		}
+		else
+		{
+			/* reset counting */
+			StopWatchState = STATE_WAIT_FOR_BTN_DOWN;
+		}
+	}
+	break;
 	case STATE_WAIT_FOR_BTN_UP:
 	{
 		startBtn1state = digitalRead(startBtn1Pin);
