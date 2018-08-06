@@ -166,9 +166,8 @@ void loop()
 		if(num < e2_rec)
 		{
 			/* new record */
-			EEPROM.put(E2_START_ADDR, num);
-			/* TODO: uncomment this when sure this is needed */
-			//e2_rec = num;
+			e2_rec = num;
+			EEPROM.put(E2_START_ADDR, e2_rec);
 		}
 
 		/* last counter value of num shall be already displayed
