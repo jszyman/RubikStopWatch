@@ -140,16 +140,16 @@ void loop()
 	}
 	case STATE_SHOW_RESULT:
 	{
+		if(num < e2_rec)
+		{
+			/* new record */
+			EEPROM.put(E2_START_ADDR, num);
+		}
+
 		/* last counter value of num shall be already displayed
 		 * keep it for 5 secs allowing user to release button */
 		if (millis() - show_result_time_ms >= 5000)
 		{
-			if(num < e2_rec)
-			{
-				/* new record */
-				EEPROM.put(E2_START_ADDR, num);
-			}
-
 			/* reset state machine */
 			StopWatchState = STATE_WAIT_FOR_BTN_DOWN;
 			sevseg.setChars(allDashesStr);
