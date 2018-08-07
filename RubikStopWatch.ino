@@ -17,8 +17,10 @@ unsigned long start_time_ms = 0;
 unsigned long show_result_time_ms = 0;
 unsigned long button_debounce_time_ms = 0;
 unsigned long clr_wait_time_ms = 0;
-int blink_num = 0;
+unsigned long blink_time_ms = 0;
 unsigned long num = 0;
+bool is_new_record = false;
+bool is_displ_blank = false;
 int startBtn1Pin = A0;
 int startBtn1state = HIGH;
 int startBtn2Pin = A1;
@@ -157,6 +159,7 @@ void loop()
 		{
 			/* stop counting */
 			show_result_time_ms = millis();
+			blink_time_ms = show_result_time_ms;
 			StopWatchState = STATE_SHOW_RESULT;
 		}
 		break;
@@ -168,6 +171,7 @@ void loop()
 			/* new record */
 			e2_rec = num;
 			EEPROM.put(E2_START_ADDR, e2_rec);
+			is_new_record = true;
 		}
 
 		/* last counter value of num shall be already displayed
@@ -178,11 +182,37 @@ void loop()
 			StopWatchState = STATE_WAIT_FOR_BTN_DOWN;
 			sevseg.setChars(allDashesStr);
 			button_debounce_time_ms = 0;
+			is_new_record = false;
+			is_displ_blank = false;
+		}
+		/* blink display for 5 secs with new record score */
+		else
+		{
+			if(millis() - blink_time_ms >= 250 && is_new_record)
+			{
+				blink_time_ms = millis();
+				if(!is_displ_blank)
+				{
+					sevseg.blank();
+					is_displ_blank = true;
+				}
+				else
+				{
+					sevseg.setNumber(num, decPlace);
+					is_displ_blank = false;
+				}
+			}
 		}
 		break;
 	}
 	}
 
-
     sevseg.refreshDisplay(); // Must run repeatedly; don't use blocking code (ex: delay()) in the loop() function or this won't work right
 }
+
+
+/* TODO:
+ * - measure time in microseconds
+ * - consistent behaviour after reset and after each measurement (showing dashes)
+ * - record shall be crc-protected
+ */
