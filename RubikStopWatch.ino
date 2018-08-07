@@ -139,18 +139,18 @@ void loop()
 		startBtn2state = digitalRead(startBtn2Pin);
 		if (startBtn1state == HIGH && startBtn2state == HIGH)
 		{
-			start_time_ms = millis();
+			start_time_ms = micros(); //millis();
 			StopWatchState = STATE_COUNTING;
 		}
 		break;
 	}
 	case STATE_COUNTING:
 	{
-		if (millis() - start_time_ms >= 10)
+		if (micros() - start_time_ms >= 1000)
 		{
 			num < RECORD_MAX ? num++ : num = 0;
 			sevseg.setNumber(num, decPlace);
-			start_time_ms = millis();
+			start_time_ms = micros(); //millis();
 		}
 
 		startBtn1state = digitalRead(startBtn1Pin);
@@ -215,4 +215,5 @@ void loop()
  * - measure time in microseconds
  * - consistent behaviour after reset and after each measurement (showing dashes)
  * - record shall be crc-protected
+ *  - remove commented-out millis() calls
  */
