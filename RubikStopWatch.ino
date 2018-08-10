@@ -9,7 +9,7 @@
 #define BUTTON_DEBOUNCE_TIME_MS 50
 #define CLR_WAIT_TIME_MS 3000u
 #define RECORD_MAX 99999UL
-#define E2_START_ADDR 14U
+#define E2_START_ADDR 0u
 
 SevSeg sevseg; //Instantiate a seven segment controller object
 
@@ -18,7 +18,7 @@ unsigned long show_result_time_ms = 0;
 unsigned long button_debounce_time_ms = 0;
 unsigned long clr_wait_time_ms = 0;
 unsigned long blink_time_ms = 0;
-unsigned long num = 0;
+uint32_t num = 0;
 bool is_new_record = false;
 bool is_displ_blank = false;
 int startBtn1Pin = A0;
@@ -28,7 +28,7 @@ int startBtn2state = HIGH;
 int clrBtnPin = A2;
 int clrBtnState = HIGH;
 
-unsigned long e2_rec;
+uint32_t e2_rec;
 
 const char allDashesStr[] = "----";
 
@@ -45,6 +45,8 @@ StopWatchState_t StopWatchState = STATE_WAIT_FOR_BTN_DOWN;
 
 
 void dispaly_counts(uint32_t rec);
+uint32_t eeprom_crc(uint8_t * ptr, size_t size);
+void clear_record(void);
 
 void setup()
 {
@@ -61,10 +63,16 @@ void setup()
 							//This is preferable, as it decreases aliasing when recording the display with a video camera....I think.
 	pinMode(startBtn1Pin, INPUT);
 	pinMode(startBtn2Pin, INPUT);
+
+	uint32_t crc_calc, crc_read;
 	EEPROM.get(E2_START_ADDR, e2_rec);
-
+	EEPROM.get(E2_START_ADDR + sizeof(e2_rec), crc_read);
+	crc_calc = eeprom_crc( (uint8_t *)&e2_rec, sizeof(e2_rec));
+	if (crc_read != crc_calc)
+	{
+		clear_record();
+	}
 	dispaly_counts(e2_rec);
-
 }
 
 void loop()
@@ -114,8 +122,7 @@ void loop()
 			if (millis() - clr_wait_time_ms >= CLR_WAIT_TIME_MS)
 			{
 				/* clear eeprom */
-				e2_rec = 0xFFFFFFFFUL;
-				EEPROM.put(E2_START_ADDR, e2_rec);
+				clear_record();
 				sevseg.setChars(allDashesStr);
 			}
 		}
@@ -163,6 +170,8 @@ void loop()
 		{
 			/* new record */
 			e2_rec = num;
+			uint32_t crc = eeprom_crc( (uint8_t *) &e2_rec, sizeof(e2_rec) );
+			EEPROM.put(E2_START_ADDR + sizeof(e2_rec), crc);
 			EEPROM.put(E2_START_ADDR, e2_rec);
 			is_new_record = true;
 		}
@@ -221,8 +230,38 @@ void dispaly_counts(uint32_t cnt)
 	}
 }
 
+/* based on: https://www.arduino.cc/en/Tutorial/EEPROMCrc */
+uint32_t eeprom_crc(uint8_t * ptr, size_t size) {
+
+	const uint32_t crc_table[16] = {
+		0x00000000, 0x1db71064, 0x3b6e20c8, 0x26d930ac,
+		0x76dc4190, 0x6b6b51f4, 0x4db26158, 0x5005713c,
+		0xedb88320, 0xf00f9344, 0xd6d6a3e8, 0xcb61b38c,
+		0x9b64c2b0, 0x86d3d2d4, 0xa00ae278, 0xbdbdf21c
+		};
+
+	uint32_t crc = ~0L;
+
+	for (size_t index = 0 ; index < size  ; ++index)
+	{
+		crc = crc_table[(crc ^ ptr[index]) & 0x0f] ^ (crc >> 4);
+		crc = crc_table[(crc ^ (ptr[index] >> 4)) & 0x0f] ^ (crc >> 4);
+		crc = ~crc;
+	}
+	return crc;
+}
+
+void clear_record(void)
+{
+	uint32_t crc;
+	e2_rec = 0xFFFFFFFFUL;
+	crc = eeprom_crc( (uint8_t *)&e2_rec, sizeof(e2_rec));
+	EEPROM.put(E2_START_ADDR + sizeof(e2_rec), crc);
+	EEPROM.put(E2_START_ADDR, e2_rec);
+}
+
 /* TODO:
  * - consistent behavior after reset and after each measurement (showing dashes)
- * - record shall be crc-protected
  *  - state machine refactor - loop() is too long
+ *  - call display_counts() instead of sevseg.setChars(allDashesStr) in loop()
  */
