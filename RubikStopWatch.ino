@@ -8,8 +8,8 @@
 
 #define BUTTON_DEBOUNCE_TIME_MS 50
 #define CLR_WAIT_TIME_MS 3000u
-#define RECORD_MAX 9999UL
-#define E2_START_ADDR 10U
+#define RECORD_MAX 99999UL
+#define E2_START_ADDR 14U
 
 SevSeg sevseg; //Instantiate a seven segment controller object
 
@@ -28,11 +28,9 @@ int startBtn2state = HIGH;
 int clrBtnPin = A2;
 int clrBtnState = HIGH;
 
-
 unsigned long e2_rec;
 
-byte decPlace = 0; //tells where to put decimal point in dispalyed number
-char allDashesStr[] = "----";
+const char allDashesStr[] = "----";
 
 typedef enum
 {
@@ -44,6 +42,9 @@ typedef enum
 } StopWatchState_t;
 
 StopWatchState_t StopWatchState = STATE_WAIT_FOR_BTN_DOWN;
+
+
+void dispaly_counts(uint32_t rec);
 
 void setup()
 {
@@ -62,15 +63,7 @@ void setup()
 	pinMode(startBtn2Pin, INPUT);
 	EEPROM.get(E2_START_ADDR, e2_rec);
 
-	if (RECORD_MAX >= e2_rec)
-	{
-		sevseg.setNumber(e2_rec);
-	}
-	else
-	{
-		/* overflow shall be displayed when empty e2 as it contains all 0xFF */
-		sevseg.setChars(allDashesStr);
-	}
+	dispaly_counts(e2_rec);
 
 }
 
@@ -98,7 +91,7 @@ void loop()
 			if (millis() - button_debounce_time_ms >= BUTTON_DEBOUNCE_TIME_MS)
 			{
 				num = 0;
-				sevseg.setNumber(num, decPlace);
+				dispaly_counts(num);
 				StopWatchState = STATE_WAIT_FOR_BTN_UP;
 			}
 		}
@@ -139,7 +132,7 @@ void loop()
 		startBtn2state = digitalRead(startBtn2Pin);
 		if (startBtn1state == HIGH && startBtn2state == HIGH)
 		{
-			start_time_ms = micros(); //millis();
+			start_time_ms = micros();
 			StopWatchState = STATE_COUNTING;
 		}
 		break;
@@ -149,8 +142,8 @@ void loop()
 		if (micros() - start_time_ms >= 1000)
 		{
 			num < RECORD_MAX ? num++ : num = 0;
-			sevseg.setNumber(num, decPlace);
-			start_time_ms = micros(); //millis();
+			dispaly_counts(num);
+			start_time_ms = micros();
 		}
 
 		startBtn1state = digitalRead(startBtn1Pin);
@@ -198,7 +191,7 @@ void loop()
 				}
 				else
 				{
-					sevseg.setNumber(num, decPlace);
+					dispaly_counts(num);
 					is_displ_blank = false;
 				}
 			}
@@ -211,9 +204,25 @@ void loop()
 }
 
 
+void dispaly_counts(uint32_t cnt)
+{
+	if (cnt <= 9999UL)
+	{
+		sevseg.setNumber(cnt, 3);
+	}
+	else if (cnt <= RECORD_MAX)
+	{
+		sevseg.setNumber(cnt/10, 2);
+	}
+	else
+	{
+		/* overflow */
+		sevseg.setChars(allDashesStr);
+	}
+}
+
 /* TODO:
- * - measure time in microseconds
- * - consistent behaviour after reset and after each measurement (showing dashes)
+ * - consistent behavior after reset and after each measurement (showing dashes)
  * - record shall be crc-protected
- *  - remove commented-out millis() calls
+ *  - state machine refactor - loop() is too long
  */
