@@ -51,7 +51,7 @@ void clear_record(void);
 void setup()
 {
 	byte numDigits = 4;
-	byte digitPins[] = {2, 3, 4, 5}; //Digits: 1,2,3,4 <--put one resistor (ex: 220 Ohms, or 330 Ohms, etc, on each digit pin)
+	byte digitPins[] = {2, A3, 4, 5}; //Digits: 1 (most significant), 2, 3, 4
 	byte segmentPins[] = {13, 12, 11, 10, 9, 8, 7, 6}; //Segments: A,B,C,D,E,F,G,Period
 	byte resistorsOnSegm = 1;
 
@@ -63,6 +63,7 @@ void setup()
 							//This is preferable, as it decreases aliasing when recording the display with a video camera....I think.
 	pinMode(startBtn1Pin, INPUT);
 	pinMode(startBtn2Pin, INPUT);
+	pinMode(clrBtnPin, INPUT);
 
 	uint32_t crc_calc, crc_read;
 	EEPROM.get(E2_START_ADDR, e2_rec);
