@@ -30,7 +30,7 @@ int clrBtnState = HIGH;
 
 uint32_t e2_rec;
 
-const char allDashesStr[] = "----";
+char allDashesStr[] = "----";
 
 typedef enum
 {
